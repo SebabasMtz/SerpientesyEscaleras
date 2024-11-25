@@ -25,7 +25,8 @@ class SerpientesEscalerasGUI:
             "- Gana quien llegue primero a la casilla 100.\n\n"
             "Colores de los jugadores:\n"
             "- Tú (Jugador): Rojo\n"
-            "- IA (Computadora): Azul"
+            "- IA Azul: Azul\n"
+            "- IA Verde: Verde"
         )
 
         reglas_label = tk.Label(self.menu_frame, text=reglas, font=("Arial", 12), justify="left")
@@ -42,9 +43,9 @@ class SerpientesEscalerasGUI:
         self.max_pos = 100
         self.serpientes = {17: 7, 54: 34, 62: 19, 87: 24, 98: 79}
         self.escaleras = {3: 38, 14: 31, 27: 84, 40: 59, 72: 91}
-        self.jugadores = {"Jugador": 1, "IA": 1}
+        self.jugadores = {"Jugador": 1, "IA Azul": 1, "IA Verde": 1}
         self.turno_actual = "Jugador"
-        self.dados = {"Jugador": 2, "IA": 2}
+        self.dados = {"Jugador": 2, "IA Azul": 2, "IA Verde": 2}
         
         self.crear_interfaz()
         self.actualizar_tablero()
@@ -83,7 +84,7 @@ class SerpientesEscalerasGUI:
                     self.tablero.create_text(x0 + 20, y0 + 35, text=f"Sube a {self.escaleras[pos]}", fill="green", font=("Arial", 8))
 
     def lanzar_dado(self):
-        num_dados = self.selector_dados.get() if self.turno_actual == "Jugador" else self.dados["IA"]
+        num_dados = self.selector_dados.get() if self.turno_actual == "Jugador" else self.dados[self.turno_actual]
         dado = sum(random.randint(1, 6) for _ in range(num_dados))
         messagebox.showinfo("Dado", f"Se lanzaron {num_dados} dado(s): Resultado = {dado}")
         self.mover_jugador(self.turno_actual, dado)
@@ -108,7 +109,7 @@ class SerpientesEscalerasGUI:
 
     def actualizar_tablero(self):
         self.tablero.delete("fichas")
-        colores = {"Jugador": "red", "IA": "blue"}
+        colores = {"Jugador": "red", "IA Azul": "blue", "IA Verde": "green"}
         size = 45
         for jugador, pos in self.jugadores.items():
             fila = (pos - 1) // 10
@@ -120,16 +121,15 @@ class SerpientesEscalerasGUI:
             self.tablero.create_oval(x - 10, y - 10, x + 10, y + 10, fill=colores[jugador], tags="fichas")
 
     def cambiar_turno(self):
-        if self.turno_actual == "Jugador":
-            self.turno_actual = "IA"
-            self.info_turno.config(text="Turno: IA")
+        turnos = list(self.jugadores.keys())
+        turno_index = turnos.index(self.turno_actual)
+        self.turno_actual = turnos[(turno_index + 1) % len(turnos)]
+        self.info_turno.config(text=f"Turno: {self.turno_actual}")
+        if "IA" in self.turno_actual:
             self.root.after(1000, self.turno_ia)
-        else:
-            self.turno_actual = "Jugador"
-            self.info_turno.config(text="Turno: Jugador")
 
     def turno_ia(self):
-        posicion_actual = self.jugadores["IA"]
+        posicion_actual = self.jugadores[self.turno_actual]
         mejores_dados = 2
         for dados in [1, 2]:
             dado = sum(random.randint(1, 6) for _ in range(dados))
@@ -137,7 +137,7 @@ class SerpientesEscalerasGUI:
             if nueva_pos in self.escaleras or (nueva_pos not in self.serpientes and nueva_pos <= self.max_pos):
                 mejores_dados = dados
                 break
-        self.dados["IA"] = mejores_dados
+        self.dados[self.turno_actual] = mejores_dados
         self.lanzar_dado()
 
 # Ejecutar el juego
