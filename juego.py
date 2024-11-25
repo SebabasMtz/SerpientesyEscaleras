@@ -11,7 +11,6 @@ class SerpientesEscalerasGUI:
         self.mostrar_menu_inicio()
 
     def mostrar_menu_inicio(self):
-        """Muestra un menú inicial con las reglas y un botón para iniciar el juego."""
         self.menu_frame = tk.Frame(self.root)
         self.menu_frame.pack(fill="both", expand=True)
 
@@ -40,36 +39,34 @@ class SerpientesEscalerasGUI:
         self.configurar_juego()
 
     def configurar_juego(self):
-        # Configuración inicial del tablero y jugadores
         self.max_pos = 100
         self.serpientes = {17: 7, 54: 34, 62: 19, 87: 24, 98: 79}
         self.escaleras = {3: 38, 14: 31, 27: 84, 40: 59, 72: 91}
-        self.jugadores = {"Jugador": 1, "IA": 1}  # Los jugadores comienzan en la casilla 1
+        self.jugadores = {"Jugador": 1, "IA": 1}
         self.turno_actual = "Jugador"
+        self.dados = {"Jugador": 2, "IA": 2}
         
-        # Cargar imágenes
-        self.imagen_serpiente = tk.PhotoImage(file="serpiente.png")
-        self.imagen_escalera = tk.PhotoImage(file="escalera.png")
-        
-        # Crear elementos gráficos
         self.crear_interfaz()
         self.actualizar_tablero()
 
     def crear_interfaz(self):
-        # Tablero
         self.tablero = tk.Canvas(self.root, width=450, height=450, bg="lightblue")
         self.tablero.pack(pady=20)
         self.dibujar_tablero()
 
-        # Botones e información
         self.info_turno = tk.Label(self.root, text="Turno: Jugador", font=("Arial", 14))
         self.info_turno.pack(pady=10)
 
-        self.boton_lanzar = tk.Button(self.root, text="Lanzar Dado", command=self.lanzar_dado)
-        self.boton_lanzar.pack(pady=10)
+        self.boton_dado = tk.Button(self.root, text="Lanzar Dado", command=self.lanzar_dado)
+        self.boton_dado.pack(pady=10)
+
+        self.selector_dados = tk.IntVar(value=2)
+        tk.Label(self.root, text="Elige el número de dados:", font=("Arial", 12)).pack()
+        tk.Radiobutton(self.root, text="1 Dado", variable=self.selector_dados, value=1).pack()
+        tk.Radiobutton(self.root, text="2 Dados", variable=self.selector_dados, value=2).pack()
 
     def dibujar_tablero(self):
-        size = 45  # Tamaño de cada celda
+        size = 45
         for i in range(10):
             for j in range(10):
                 x0 = j * size
@@ -80,22 +77,19 @@ class SerpientesEscalerasGUI:
                 self.tablero.create_rectangle(x0, y0, x1, y1, fill="white", outline="black")
                 self.tablero.create_text(x0 + 20, y0 + 20, text=str(pos))
 
-                # Colocar imágenes de serpientes y escaleras y mostrar su destino
                 if pos in self.serpientes:
-                    self.tablero.create_image(x0 + 20, y0 + 10, image=self.imagen_serpiente, tags="serpientes")
                     self.tablero.create_text(x0 + 20, y0 + 35, text=f"Baja a {self.serpientes[pos]}", fill="red", font=("Arial", 8))
                 elif pos in self.escaleras:
-                    self.tablero.create_image(x0 + 20, y0 + 10, image=self.imagen_escalera, tags="escaleras")
                     self.tablero.create_text(x0 + 20, y0 + 35, text=f"Sube a {self.escaleras[pos]}", fill="green", font=("Arial", 8))
 
     def lanzar_dado(self):
-        dado = random.randint(1, 6)
-        messagebox.showinfo("Dado", f"Obtuviste un {dado}")
+        num_dados = self.selector_dados.get() if self.turno_actual == "Jugador" else self.dados["IA"]
+        dado = sum(random.randint(1, 6) for _ in range(num_dados))
+        messagebox.showinfo("Dado", f"Se lanzaron {num_dados} dado(s): Resultado = {dado}")
         self.mover_jugador(self.turno_actual, dado)
 
     def mover_jugador(self, jugador, dado):
         nueva_pos = self.jugadores[jugador] + dado
-
         if nueva_pos > self.max_pos:
             messagebox.showinfo("Turno perdido", f"{jugador} necesita un número exacto para ganar.")
         else:
@@ -105,50 +99,49 @@ class SerpientesEscalerasGUI:
             elif nueva_pos in self.escaleras:
                 nueva_pos = self.escaleras[nueva_pos]
                 messagebox.showinfo("Escalera", f"{jugador} subió por una escalera. Sube a {nueva_pos}.")
-
             self.jugadores[jugador] = nueva_pos
             self.actualizar_tablero()
-
             if nueva_pos == self.max_pos:
                 messagebox.showinfo("¡Ganador!", f"¡{jugador} ha ganado el juego!")
                 self.root.quit()
-
         self.cambiar_turno()
 
     def actualizar_tablero(self):
         self.tablero.delete("fichas")
         colores = {"Jugador": "red", "IA": "blue"}
-        size = 45  # Tamaño de cada casilla en el tablero
-
-        # El cálculo de la posición de la ficha ahora está corregido
+        size = 45
         for jugador, pos in self.jugadores.items():
             fila = (pos - 1) // 10
             col = (pos - 1) % 10
-            if fila % 2 == 1:  # Invertir las columnas en filas impares
+            if fila % 2 == 1:
                 col = 9 - col
-            x = col * size + size / 2  # Centramos la ficha dentro de la casilla
-            y = (9 - fila) * size + size / 2  # Centramos la ficha dentro de la casilla
+            x = col * size + size / 2
+            y = (9 - fila) * size + size / 2
             self.tablero.create_oval(x - 10, y - 10, x + 10, y + 10, fill=colores[jugador], tags="fichas")
 
     def cambiar_turno(self):
         if self.turno_actual == "Jugador":
             self.turno_actual = "IA"
             self.info_turno.config(text="Turno: IA")
-            self.root.after(1000, self.turno_ia)  # Esperar 1 segundo antes de jugar el turno de la IA
+            self.root.after(1000, self.turno_ia)
         else:
             self.turno_actual = "Jugador"
             self.info_turno.config(text="Turno: Jugador")
 
     def turno_ia(self):
-        dado = random.randint(1, 6)
-        messagebox.showinfo("Dado IA", f"La IA obtuvo un {dado}")
-        self.mover_jugador("IA", dado)
-
+        posicion_actual = self.jugadores["IA"]
+        mejores_dados = 2
+        for dados in [1, 2]:
+            dado = sum(random.randint(1, 6) for _ in range(dados))
+            nueva_pos = posicion_actual + dado
+            if nueva_pos in self.escaleras or (nueva_pos not in self.serpientes and nueva_pos <= self.max_pos):
+                mejores_dados = dados
+                break
+        self.dados["IA"] = mejores_dados
+        self.lanzar_dado()
 
 # Ejecutar el juego
 if __name__ == "__main__":
     root = tk.Tk()
     juego = SerpientesEscalerasGUI(root)
     root.mainloop()
-
-
