@@ -9,6 +9,14 @@ class JuegoSerpientesEscaleras:
         self.root.title("Serpientes y Escaleras")
         self.root.geometry("600x700")
         
+        self.serpiente_img = Image.open("serpiente.png")
+        self.serpiente_img = self.serpiente_img.resize((30, 30))  # Ajusta el tamaño de la imagen de la serpiente
+        self.serpiente_photo = ImageTk.PhotoImage(self.serpiente_img)
+
+        self.escalera_img = Image.open("escalera.png")
+        self.escalera_img = self.escalera_img.resize((30, 30))  # Ajusta el tamaño de la imagen de la escalera
+        self.escalera_photo = ImageTk.PhotoImage(self.escalera_img)
+
         self.mostrar_menu_inicio()
 
     def mostrar_menu_inicio(self):
@@ -80,9 +88,11 @@ class JuegoSerpientesEscaleras:
                 self.tablero.create_text(x0 + 20, y0 + 20, text=str(pos))
 
                 if pos in self.serpientes:
-                    self.tablero.create_text(x0 + 20, y0 + 35, text=f"Baja a {self.serpientes[pos]}", fill="red", font=("Arial", 8))
+                    self.tablero.create_image(x0 + 20, y0 + 20, image=self.serpiente_photo, tags="serpientes")
+                    self.tablero.create_text(x0 + 20, y0 + 40, text=f"Vas a {self.serpientes[pos]}", font=("Arial", 8), fill="red", tags="serpientes")
                 elif pos in self.escaleras:
-                    self.tablero.create_text(x0 + 20, y0 + 35, text=f"Sube a {self.escaleras[pos]}", fill="green", font=("Arial", 8))
+                    self.tablero.create_image(x0 + 20, y0 + 20, image=self.escalera_photo, tags="escaleras")
+                    self.tablero.create_text(x0 + 20, y0 + 40, text=f"Subes a {self.escaleras[pos]}", font=("Arial", 8), fill="green", tags="escaleras")
 
     def lanzar_dado(self):
         num_dados = self.selector_dados.get() if self.turno_actual == "Jugador" else self.dados[self.turno_actual]
@@ -150,21 +160,19 @@ class JuegoSerpientesEscaleras:
     def turno_ia(self):
         posicion_actual = self.jugadores[self.turno_actual]
         mejores_dados = 2
-        for dados in [1, 2]:
-            dado = sum(random.randint(1, 6) for _ in range(dados))
-            nueva_pos = posicion_actual + dado
-            if nueva_pos in self.escaleras or (nueva_pos not in self.serpientes and nueva_pos <= self.max_pos):
+        for dados in range(1, 3):
+            if (posicion_actual + dados <= self.max_pos and
+                    (posicion_actual + dados) not in self.serpientes):
                 mejores_dados = dados
                 break
         self.dados[self.turno_actual] = mejores_dados
         self.lanzar_dado()
 
     def finalizar_juego(self, ganador):
-        messagebox.showinfo("¡Juego Terminado!", f"¡{ganador} ha ganado el juego!")
+        messagebox.showinfo("Fin del Juego", f"{ganador} ha ganado el juego!")
         self.root.quit()
 
-# Ejecutar el juego
-if __name__ == "__main__":
-    root = tk.Tk()
-    juego = JuegoSerpientesEscaleras(root)
-    root.mainloop()
+# Iniciar la aplicación
+root = tk.Tk()
+juego = JuegoSerpientesEscaleras(root)
+root.mainloop()
