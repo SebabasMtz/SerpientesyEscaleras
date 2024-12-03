@@ -1,12 +1,13 @@
 import tkinter as tk
 from tkinter import messagebox
 import random
+from PIL import Image, ImageTk
 
-class SerpientesEscalerasGUI:
+class JuegoSerpientesEscaleras:
     def __init__(self, root):
         self.root = root
         self.root.title("Serpientes y Escaleras")
-        self.root.geometry("600x600")
+        self.root.geometry("600x700")
         
         self.mostrar_menu_inicio()
 
@@ -87,25 +88,43 @@ class SerpientesEscalerasGUI:
         num_dados = self.selector_dados.get() if self.turno_actual == "Jugador" else self.dados[self.turno_actual]
         dado = sum(random.randint(1, 6) for _ in range(num_dados))
         messagebox.showinfo("Dado", f"Se lanzaron {num_dados} dado(s): Resultado = {dado}")
-        self.mover_jugador(self.turno_actual, dado)
+        self.mover_ficha(self.turno_actual, dado)
 
-    def mover_jugador(self, jugador, dado):
+    def mover_ficha(self, jugador, dado):
         nueva_pos = self.jugadores[jugador] + dado
         if nueva_pos > self.max_pos:
             messagebox.showinfo("Turno perdido", f"{jugador} necesita un número exacto para ganar.")
         else:
-            if nueva_pos in self.serpientes:
-                nueva_pos = self.serpientes[nueva_pos]
-                messagebox.showinfo("Serpiente", f"{jugador} cayó en una serpiente. Baja a {nueva_pos}.")
-            elif nueva_pos in self.escaleras:
-                nueva_pos = self.escaleras[nueva_pos]
-                messagebox.showinfo("Escalera", f"{jugador} subió por una escalera. Sube a {nueva_pos}.")
+            # Validar casilla y actualizar la posición
+            tipo_casilla = self.validar_casilla(nueva_pos)
+            if tipo_casilla == "serpiente":
+                nueva_pos = self.bajar_serpiente(jugador, nueva_pos)
+            elif tipo_casilla == "escalera":
+                nueva_pos = self.subir_escalera(jugador, nueva_pos)
             self.jugadores[jugador] = nueva_pos
             self.actualizar_tablero()
             if nueva_pos == self.max_pos:
-                messagebox.showinfo("¡Ganador!", f"¡{jugador} ha ganado el juego!")
-                self.root.quit()
+                self.finalizar_juego(jugador)
         self.cambiar_turno()
+
+    def bajar_serpiente(self, jugador, posicion):
+        nueva_pos = self.serpientes[posicion]
+        messagebox.showinfo("Serpiente", f"{jugador} cayó en una serpiente. Baja a {nueva_pos}.")
+        return nueva_pos
+
+    def subir_escalera(self, jugador, posicion):
+        nueva_pos = self.escaleras[posicion]
+        messagebox.showinfo("Escalera", f"{jugador} subió por una escalera. Sube a {nueva_pos}.")
+        return nueva_pos
+
+    def validar_casilla(self, posicion):
+        """Valida si la casilla es normal, serpiente o escalera."""
+        if posicion in self.serpientes:
+            return "serpiente"
+        elif posicion in self.escaleras:
+            return "escalera"
+        else:
+            return "normal"
 
     def actualizar_tablero(self):
         self.tablero.delete("fichas")
@@ -140,8 +159,12 @@ class SerpientesEscalerasGUI:
         self.dados[self.turno_actual] = mejores_dados
         self.lanzar_dado()
 
+    def finalizar_juego(self, ganador):
+        messagebox.showinfo("¡Juego Terminado!", f"¡{ganador} ha ganado el juego!")
+        self.root.quit()
+
 # Ejecutar el juego
 if __name__ == "__main__":
     root = tk.Tk()
-    juego = SerpientesEscalerasGUI(root)
+    juego = JuegoSerpientesEscaleras(root)
     root.mainloop()
